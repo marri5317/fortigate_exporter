@@ -1,4 +1,4 @@
-# api/v2/monitor/vpn/ssl?vom=*
+# api/v2/monitor/vpn/ssl?vdom=*
 [
   {
     "http_method":"GET",

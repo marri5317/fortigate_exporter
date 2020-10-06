@@ -220,6 +220,7 @@ func probeVPNStatistics(c FortiHTTP, registry *prometheus.Registry) bool {
 	return true
 
 }
+
 func probeIPSec(c FortiHTTP, registry *prometheus.Registry) bool {
 	var (
 		status = prometheus.NewGaugeVec(
