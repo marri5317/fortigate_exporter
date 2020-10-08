@@ -32,14 +32,14 @@ type HTTPClient interface {
 	Do(req *http.Request) (*http.Response, error)
 }
 
-type fortiTokenClient struct {
+type FortiGateClient struct {
 	tgt url.URL
 	hc  HTTPClient
 	ctx context.Context
 	tok string
 }
 
-func (c *fortiTokenClient) newGetRequest(url string) (*http.Request, error) {
+func (c *FortiGateClient) newGetRequest(url string) (*http.Request, error) {
 	if *insecure {
 		http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 	}
@@ -52,7 +52,7 @@ func (c *fortiTokenClient) newGetRequest(url string) (*http.Request, error) {
 	return r, nil
 }
 
-func (c *fortiTokenClient) Get(path string, query string, obj interface{}) error {
+func (c *FortiGateClient) Get(path string, query string, obj interface{}) error {
 	u := c.tgt
 	u.Path = path
 	u.RawQuery = query
@@ -78,10 +78,10 @@ func (c *fortiTokenClient) Get(path string, query string, obj interface{}) error
 	return json.Unmarshal(b, obj)
 }
 
-func (c *fortiTokenClient) String() string {
+func (c *FortiGateClient) String() string {
 	return c.tgt.String()
 }
 
-func newFortiTokenClient(ctx context.Context, tgt url.URL, hc HTTPClient, token string) (*fortiTokenClient, error) {
-	return &fortiTokenClient{tgt, hc, ctx, token}, nil
+func newFortiGateClient(ctx context.Context, tgt url.URL, hc HTTPClient, token string) (*FortiGateClient, error) {
+	return &FortiGateClient{tgt, hc, ctx, token}, nil
 }

@@ -39,8 +39,8 @@ func (c *fakeHTTPClient) Do(r *http.Request) (*http.Response, error) {
 	}, nil
 }
 
-func newClient(sc int, b string) (*fortiTokenClient, error) {
-	return newFortiTokenClient(
+func newClient(sc int, b string) (*FortiGateClient, error) {
+	return newFortiGateClient(
 		context.Background(),
 		url.URL{Scheme: "https", Host: "localhost"},
 		&fakeHTTPClient{sc, b},
