@@ -47,7 +47,7 @@ type Auth struct {
 }
 
 type FortiHTTP interface {
-	Get(path string, query string, obj interface{}) error
+	Query(path string, query string, obj interface{}) error
 }
 
 func newFortiClient(ctx context.Context, tgt url.URL, hc *http.Client) (FortiHTTP, error) {

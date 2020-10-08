@@ -48,7 +48,7 @@ func probeSystemStatus(c FortiHTTP, registry *prometheus.Registry) bool {
 	}
 	var st systemStatus
 
-	if err := c.Get("api/v2/monitor/system/status", "", &st); err != nil {
+	if err := c.Query("api/v2/monitor/system/status", "", &st); err != nil {
 		log.Printf("Error: %v", err)
 		return false
 	}
@@ -112,7 +112,7 @@ func probeSystemResources(c FortiHTTP, registry *prometheus.Registry) bool {
 	}
 	var sr systemResourceUsage
 
-	if err := c.Get("api/v2/monitor/system/resource/usage", "interval=1-min&scope=global", &sr); err != nil {
+	if err := c.Query("api/v2/monitor/system/resource/usage", "interval=1-min&scope=global", &sr); err != nil {
 		log.Printf("Error: %v", err)
 		return false
 	}
@@ -178,7 +178,7 @@ func probeSystemVDOMResources(c FortiHTTP, registry *prometheus.Registry) bool {
 	}
 	var sr []systemResourceUsage
 
-	if err := c.Get("api/v2/monitor/system/resource/usage", "interval=1-min&vdom=*", &sr); err != nil {
+	if err := c.Query("api/v2/monitor/system/resource/usage", "interval=1-min&vdom=*", &sr); err != nil {
 		log.Printf("Error: %v", err)
 		return false
 	}
@@ -207,7 +207,7 @@ func probeVPNStatistics(c FortiHTTP, registry *prometheus.Registry) bool {
 		VDOM    string
 	}
 	var res []result
-	if err := c.Get("api/v2/monitor/vpn/ssl", "vdom=*", &res); err != nil {
+	if err := c.Query("api/v2/monitor/vpn/ssl", "vdom=*", &res); err != nil {
 		log.Printf("Error: %v", err)
 		return false
 	}
@@ -265,7 +265,7 @@ func probeIPSec(c FortiHTTP, registry *prometheus.Registry) bool {
 		VDOM    string
 	}
 	var res []ipsecResult
-	if err := c.Get("api/v2/monitor/vpn/ipsec", "vdom=*", &res); err != nil {
+	if err := c.Query("api/v2/monitor/vpn/ipsec", "vdom=*", &res); err != nil {
 		log.Printf("Error: %v", err)
 		return false
 	}
@@ -356,11 +356,11 @@ func probeFirewallPolicies(c FortiHTTP, registry *prometheus.Registry) bool {
 	var ps4 []policyStats
 	var ps6 []policyStats
 
-	if err := c.Get("api/v2/monitor/firewall/policy/select", "vdom=*", &ps4); err != nil {
+	if err := c.Query("api/v2/monitor/firewall/policy/select", "vdom=*", &ps4); err != nil {
 		log.Printf("Error: %v", err)
 		return false
 	}
-	if err := c.Get("api/v2/monitor/firewall/policy6/select", "vdom=*", &ps6); err != nil {
+	if err := c.Query("api/v2/monitor/firewall/policy6/select", "vdom=*", &ps6); err != nil {
 		log.Printf("Error: %v", err)
 		return false
 	}
@@ -382,11 +382,11 @@ func probeFirewallPolicies(c FortiHTTP, registry *prometheus.Registry) bool {
 
 	query := "vdom=*&policyid|name|uuid|action|status"
 
-	if err := c.Get("api/v2/cmdb/firewall/policy", query, &pc4); err != nil {
+	if err := c.Query("api/v2/cmdb/firewall/policy", query, &pc4); err != nil {
 		log.Printf("Error: %v", err)
 		return false
 	}
-	if err := c.Get("api/v2/cmdb/firewall/policy6", query, &pc6); err != nil {
+	if err := c.Query("api/v2/cmdb/firewall/policy6", query, &pc6); err != nil {
 		log.Printf("Error: %v", err)
 		return false
 	}
@@ -527,7 +527,7 @@ func probeInterfaces(c FortiHTTP, registry *prometheus.Registry) bool {
 	}
 	var r []ifResponse
 
-	if err := c.Get("api/v2/monitor/system/interface/select", "vdom=*&include_vlan=true&include_aggregate=true", &r); err != nil {
+	if err := c.Query("api/v2/monitor/system/interface/select", "vdom=*&include_vlan=true&include_aggregate=true", &r); err != nil {
 		log.Printf("Error: %v", err)
 		return false
 	}

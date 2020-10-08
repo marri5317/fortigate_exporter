@@ -46,7 +46,7 @@ func (c *fakeClient) prepare(path string, jfile string) {
 	c.data[path] = []byte(output)
 }
 
-func (c *fakeClient) Get(path string, query string, obj interface{}) error {
+func (c *fakeClient) Query(path string, query string, obj interface{}) error {
 	d, ok := c.data[path]
 	if !ok {
 		log.Fatalf("Tried to get unprepared URL %q", path)

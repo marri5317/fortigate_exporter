@@ -39,7 +39,7 @@ type FortiGateClient struct {
 	tok string
 }
 
-func (c *FortiGateClient) newGetRequest(url string) (*http.Request, error) {
+func (c *FortiGateClient) newQuery(url string) (*http.Request, error) {
 	if *insecure {
 		http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 	}
@@ -52,12 +52,12 @@ func (c *FortiGateClient) newGetRequest(url string) (*http.Request, error) {
 	return r, nil
 }
 
-func (c *FortiGateClient) Get(path string, query string, obj interface{}) error {
+func (c *FortiGateClient) Query(path string, query string, obj interface{}) error {
 	u := c.tgt
 	u.Path = path
 	u.RawQuery = query
 
-	req, err := c.newGetRequest(u.String())
+	req, err := c.newQuery(u.String())
 	if err != nil {
 		return err
 	}
