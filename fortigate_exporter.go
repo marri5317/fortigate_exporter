@@ -26,6 +26,7 @@ import (
 	"net/http"
 	"net/url"
 	"time"
+	"strings"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -43,7 +44,7 @@ var (
 )
 
 type Auth struct {
-	Token string
+	Authentication string
 }
 
 type FortiHTTP interface {
@@ -56,11 +57,11 @@ func newFortiClientFGT(ctx context.Context, tgt url.URL, hc *http.Client) (Forti
 		return nil, fmt.Errorf("No API authentication registered for %q", tgt.String())
 	}
 
-	if auth.Token != "" {
+	if auth.Authentication != "" {
 		if tgt.Scheme != "https" {
 			return nil, fmt.Errorf("FortiOS only supports token for HTTPS connections")
 		}
-		c, err := newFortiGateClient(ctx, tgt, hc, auth.Token)
+		c, err := newFortiGateClient(ctx, tgt, hc, auth.Authentication)
 		if err != nil {
 			return nil, err
 		}
@@ -70,9 +71,25 @@ func newFortiClientFGT(ctx context.Context, tgt url.URL, hc *http.Client) (Forti
 }
 
 func newFortiClientFMG(ctx context.Context, tgt url.URL, res string, hc *http.Client) (FortiHTTP, error) {
-	// TODO: Implement authentication with FortiManager and
-	// created fortimanager_client.go
-	return nil, nil
+	auth, ok := authMap[tgt.String()]
+	if !ok {
+		return nil, fmt.Errorf("No API authentication registered for %q", tgt.String())
+	}
+
+	if auth.Authentication != "" {
+		if tgt.Scheme != "https" {
+			return nil, fmt.Errorf("FortiOS only supports token for HTTPS connections")
+		}
+
+		var authentication = strings.Split(auth.Authentication, ":")
+
+		c, err := newFortiManagerClient(ctx, tgt, res, hc, authentication[0], authentication[1])
+		if err != nil {
+			return nil, err
+		}
+		return c, nil
+	}
+	return nil, fmt.Errorf("Invalid authentication data for %q", tgt.String())
 }
 
 func probeHandler(w http.ResponseWriter, r *http.Request) {
