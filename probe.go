@@ -565,20 +565,31 @@ func probe(ctx context.Context, target string, registry *prometheus.Registry, hc
 		Scheme: tgt.Scheme,
 		Host:   tgt.Host,
 	}
-	c, err := newFortiClient(ctx, u, hc)
-	if err != nil {
-		return false, err
+
+	var c FortiHTTP
+
+	// TODO: Think of a better way to identify queries to FMG
+	if tgt.Path != "" {
+		c, err = newFortiClientFMG(ctx, u, tgt.Path, hc)
+		if err != nil {
+			return false, err
+		}
+	} else {
+		c, err = newFortiClientFGT(ctx, u, hc)
+		if err != nil {
+			return false, err
+		}
 	}
 
 	// TODO: Make parallel
 	success :=
 		probeSystemStatus(c, registry) &&
-			probeSystemResources(c, registry) &&
-			probeSystemVDOMResources(c, registry) &&
-			probeFirewallPolicies(c, registry) &&
-			probeInterfaces(c, registry) &&
-			probeVPNStatistics(c, registry) &&
-			probeIPSec(c, registry)
+		probeSystemResources(c, registry) &&
+		probeSystemVDOMResources(c, registry) &&
+		probeFirewallPolicies(c, registry) &&
+		probeInterfaces(c, registry) &&
+		probeVPNStatistics(c, registry) &&
+		probeIPSec(c, registry)
 
 	// TODO(bluecmd): log/current-disk-usage
 	return success, nil

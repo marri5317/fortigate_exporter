@@ -50,7 +50,7 @@ type FortiHTTP interface {
 	Query(path string, query string, obj interface{}) error
 }
 
-func newFortiClient(ctx context.Context, tgt url.URL, hc *http.Client) (FortiHTTP, error) {
+func newFortiClientFGT(ctx context.Context, tgt url.URL, hc *http.Client) (FortiHTTP, error) {
 	auth, ok := authMap[tgt.String()]
 	if !ok {
 		return nil, fmt.Errorf("No API authentication registered for %q", tgt.String())
@@ -69,13 +69,13 @@ func newFortiClient(ctx context.Context, tgt url.URL, hc *http.Client) (FortiHTT
 	return nil, fmt.Errorf("Invalid authentication data for %q", tgt.String())
 }
 
+func newFortiClientFMG(ctx context.Context, tgt url.URL, res string, hc *http.Client) (FortiHTTP, error) {
+	// TODO: Implement authentication with FortiManager and
+	// created fortimanager_client.go
+	return nil, nil
+}
+
 func probeHandler(w http.ResponseWriter, r *http.Request) {
-	params := r.URL.Query()
-	target := params.Get("target")
-	if target == "" {
-		http.Error(w, "Target parameter missing or empty", http.StatusBadRequest)
-		return
-	}
 	probeSuccessGauge := prometheus.NewGauge(prometheus.GaugeOpts{
 		Name: "probe_success",
 		Help: "Whether or not the probe succeeded",
@@ -89,22 +89,74 @@ func probeHandler(w http.ResponseWriter, r *http.Request) {
 	registry := prometheus.NewRegistry()
 	registry.MustRegister(probeSuccessGauge)
 	registry.MustRegister(probeDurationGauge)
-	start := time.Now()
-	success, err := probe(ctx, target, registry, &http.Client{})
-	if err != nil {
-		log.Printf("Probe request rejected; error is: %v", err)
-		http.Error(w, fmt.Sprintf("probe: %v", err), http.StatusBadRequest)
-		return
+
+	path := r.URL.Path
+	params := r.URL.Query()
+	target := params.Get("target")
+
+	if path == "/fmfgt" {
+		adom := params.Get("adom")
+		fw := params.Get("fw")
+
+		if target == "" {
+			http.Error(w, "Target parameter missing or empty", http.StatusBadRequest)
+			return
+		}
+		if adom == "" {
+			http.Error(w, "ADOM parameter missing or empty", http.StatusBadRequest)
+			return
+		}
+		if fw == "" {
+			http.Error(w, "FW parameter missing or empty", http.StatusBadRequest)
+			return
+		}
+
+		target := target + "/adom/" + adom + "/device/" + fw
+
+		start := time.Now()
+		success, err := probe(ctx, target, registry, &http.Client{})
+
+		if err != nil {
+			log.Printf("Probe request rejected; error is: %v", err)
+			http.Error(w, fmt.Sprintf("probe: %v", err), http.StatusBadRequest)
+			return
+		}
+		duration := time.Since(start).Seconds()
+		probeDurationGauge.Set(duration)
+	
+		if success {
+			probeSuccessGauge.Set(1)
+			log.Printf("Probe of %q succeeded, took %.3f seconds", target, duration)
+		} else {
+			// probeSuccessGauge default is 0
+			log.Printf("Probe of %q failed, took %.3f seconds", target, duration)
+		}
+	} else if path == "/fgt" {	
+		if target == "" {
+			http.Error(w, "Target parameter missing or empty", http.StatusBadRequest)
+			return
+		}
+
+		start := time.Now()
+		success, err := probe(ctx, target, registry, &http.Client{})
+
+		if err != nil {
+			log.Printf("Probe request rejected; error is: %v", err)
+			http.Error(w, fmt.Sprintf("probe: %v", err), http.StatusBadRequest)
+			return
+		}
+		duration := time.Since(start).Seconds()
+		probeDurationGauge.Set(duration)
+	
+		if success {
+			probeSuccessGauge.Set(1)
+			log.Printf("Probe of %q succeeded, took %.3f seconds", target, duration)
+		} else {
+			// probeSuccessGauge default is 0
+			log.Printf("Probe of %q failed, took %.3f seconds", target, duration)
+		}
 	}
-	duration := time.Since(start).Seconds()
-	probeDurationGauge.Set(duration)
-	if success {
-		probeSuccessGauge.Set(1)
-		log.Printf("Probe of %q succeeded, took %.3f seconds", target, duration)
-	} else {
-		// probeSuccessGauge default is 0
-		log.Printf("Probe of %q failed, took %.3f seconds", target, duration)
-	}
+
 	h := promhttp.HandlerFor(registry, promhttp.HandlerOpts{})
 	h.ServeHTTP(w, r)
 }
