@@ -124,7 +124,8 @@ func main() {
 	log.Printf("Loaded %d API keys", len(authMap))
 
 	http.Handle("/metrics", promhttp.Handler())
-	http.HandleFunc("/probe", probeHandler)
+	http.HandleFunc("/fgt", probeHandler)
+	http.HandleFunc("/fmfgt", probeHandler)
 	go http.ListenAndServe(*listen, nil)
 	log.Printf("Fortigate exporter running, listening on %q", *listen)
 	select {}
