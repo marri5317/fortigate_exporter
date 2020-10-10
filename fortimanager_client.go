@@ -37,6 +37,28 @@ type FortiManagerClient struct {
 	password string
 }
 
+type FMGResponse struct {
+	Method string `json:"method"`
+	Result []FMGResult `json:"result"`
+	ID int `json:"id"`
+}
+
+type FMGResult struct {
+	Data FMGData `json:"data"`
+	Status FMGStatus `json:"status"`
+	URL string `json:"url"`
+}
+
+type FMGData struct {
+	Response interface{} `json:"response"`
+	Target string `json:"target"`
+}
+
+type FMGStatus struct {
+	Code int `json:"code"`
+	Message string `json:"message"`
+}
+
 func (c *FortiManagerClient) getSession() (string, error) {
 	var ses []byte
 	
@@ -137,7 +159,13 @@ func (c *FortiManagerClient) Query(path string, query string, obj interface{}) e
 	if err != nil {
 		return err
 	}
-	return json.Unmarshal(b, obj)
+
+	response := FMGResponse{}
+	json.Unmarshal(b, &response)
+
+	obj = response.Result[0].Data.Response
+
+	return nil
 }
 
 func (c *FortiManagerClient) String() string {
