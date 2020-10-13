@@ -65,6 +65,9 @@ func (c *FortiManagerClient) getSession() (string, error) {
 	rpc_url := c.tgt.String() + "/jsonrpc"
 	ses, err := ioutil.ReadFile("session")
 	if err != nil {
+		// Clear error
+		err = nil
+
 		// Request new session token from the FortiManager
 		reqBody, err := json.Marshal(map[string]interface{}{
 			"method": "exec",
