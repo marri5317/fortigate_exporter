@@ -19,6 +19,7 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"log"
 	"net/http"
@@ -551,6 +552,10 @@ func probeInterfaces(c FortiHTTP, registry *prometheus.Registry) bool {
 }
 
 func probe(ctx context.Context, target string, registry *prometheus.Registry, hc *http.Client) (bool, error) {
+	if *insecure {
+		http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+	}
+
 	tgt, err := url.Parse(target)
 	if err != nil {
 		return false, fmt.Errorf("url.Parse failed: %v", err)
