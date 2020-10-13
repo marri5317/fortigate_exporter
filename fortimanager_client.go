@@ -99,6 +99,8 @@ func (c *FortiManagerClient) getSession() (string, error) {
 		session := result["session"]
 
 		err = ioutil.WriteFile("session", []byte(session), 0600)
+
+		return session, err
 	}
 
 	return string(ses), err
