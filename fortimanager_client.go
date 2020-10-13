@@ -44,7 +44,7 @@ type FMGResponse struct {
 }
 
 type FMGResult struct {
-	Data FMGData `json:"data"`
+	Data []FMGData `json:"data"`
 	Status FMGStatus `json:"status"`
 	URL string `json:"url"`
 }
@@ -184,7 +184,7 @@ func (c *FortiManagerClient) Query(path string, query string, obj interface{}) e
 		return err
 	}
 
-	err = json.Unmarshal(response.Result[0].Data.Response, &obj)
+	err = json.Unmarshal(response.Result[0].Data[0].Response, &obj)
 
 	if err != nil {
 		return err
