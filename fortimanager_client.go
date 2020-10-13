@@ -50,7 +50,7 @@ type FMGResult struct {
 }
 
 type FMGData struct {
-	Response interface{} `json:"response"`
+	Response json.RawMessage `json:"response"`
 	Target string `json:"target"`
 }
 
@@ -101,24 +101,38 @@ func (c *FortiManagerClient) getSession() (string, error) {
 	return string(ses), err
 }
 
-func (c *FortiManagerClient) newQuery(url string) (*http.Request, error) {
+func (c *FortiManagerClient) newQuery(resource string) (*http.Request, error) {
 	ses, err := c.getSession()
 
 	if err != nil {
-		return nil, fmt.Errorf("Unable to login to the FortiManager")
+		return nil, err
 	}
 
+	var res_url string
 	rpc_url := c.tgt.String() + "/jsonrpc"
+	path, err := url.Parse(resource)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if path.ForceQuery {
+		res_url = path.Path + "?" + path.RawQuery
+	} else {
+		res_url = path.Path
+	}
 
 	reqBody, err := json.Marshal(map[string]interface{}{
 		"method": "exec",
 		"params": []map[string]interface{}{
 			map[string]interface{}{
-				"data": map[string]string{
+				"data": map[string]interface{}{
 					"action": "get",
-					"payload": "",
-					"resource": url,
-					"target": c.res,
+					"payload": map[string]string{},
+					"resource": res_url,
+					"target": []string{
+						c.res,
+					},
 				},
 				"url": "/sys/proxy/json",
 			},
@@ -132,6 +146,8 @@ func (c *FortiManagerClient) newQuery(url string) (*http.Request, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	r.Header.Add("Content-Type", "application/json")
 	
 	return r, nil
 }
@@ -151,6 +167,7 @@ func (c *FortiManagerClient) Query(path string, query string, obj interface{}) e
 	if err != nil {
 		return err
 	}
+
 	if resp.StatusCode != 200 {
 		return fmt.Errorf("Response code was %d, expected 200", resp.StatusCode)
 	}
@@ -161,9 +178,17 @@ func (c *FortiManagerClient) Query(path string, query string, obj interface{}) e
 	}
 
 	response := FMGResponse{}
-	json.Unmarshal(b, &response)
+	err = json.Unmarshal(b, &response)
 
-	obj = response.Result[0].Data.Response
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal(response.Result[0].Data.Response, &obj)
+
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
