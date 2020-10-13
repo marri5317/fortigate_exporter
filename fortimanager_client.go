@@ -116,7 +116,7 @@ func (c *FortiManagerClient) newQuery(resource string) (*http.Request, error) {
 		return nil, err
 	}
 
-	if path.ForceQuery {
+	if path.RawQuery != "" {
 		res_url = path.Path + "?" + path.RawQuery
 	} else {
 		res_url = path.Path
